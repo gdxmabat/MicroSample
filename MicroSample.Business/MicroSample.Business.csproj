@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Koa.Domain" Version="2.1.1" />
+    <PackageReference Include="Koa.Domain.Search" Version="2.1.1" />
+    <PackageReference Include="Koa.Integration.PubSub" Version="2.2.0" />
+    <PackageReference Include="Koa.Mapping.ObjectMapper.Automapper.Domain" Version="2.1.1" />
+    <PackageReference Include="Koa.Persistence.Abstractions" Version="2.1.1" />
+    <PackageReference Include="Koa.Persistence.EntityRepository" Version="2.1.1" />
+    <PackageReference Include="Koa.Persistence.EntityRepository.EntityFrameworkCore.Mapper" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MicroSample.Domain\MicroSample.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

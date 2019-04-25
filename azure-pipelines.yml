@@ -1,0 +1,80 @@
+pool:
+  name: Hosted Ubuntu 1604
+
+variables:
+  projectDockerPath: 'MicroSample.Api'
+  registryServerName: '$(registryName).azurecr.io'
+  imageName: '$(projectName)'
+
+  # define 4 more variables: projectName, registryName, registryLogin and registryPassword in the build pipeline in UI
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: Restore
+  inputs:
+    command: restore
+    projects: '**/*.csproj'
+    feedsToUse: config
+    nugetConfigPath: NuGet.config
+    externalFeedCredentials: 'NUGET_KOA'
+
+- task: DotNetCoreCLI@2
+  displayName: TEST
+  inputs:
+    command: test
+    projects: '**/*.csproj'
+  enabled: 'false'
+
+
+- task: DotNetCoreCLI@2
+  displayName: Build
+  inputs:
+    projects: '**/*.csproj'
+
+
+- task: DotNetCoreCLI@2
+  displayName: Publish
+  inputs:
+    command: publish
+    publishWebProjects: false
+    projects: '**/*.csproj'
+    arguments: '-c Release -o ./publish/backend'
+    zipAfterPublish: false
+    modifyOutputPath: false
+    workingDirectory: MicroSample.Api
+
+
+- task: Docker@2
+  displayName: 'Docker Build'
+  inputs:
+    command: build
+    Dockerfile: MicroSample.Api/Dockerfile
+  enabled: 'false'
+
+
+- bash: 'docker build -f $(system.defaultWorkingDirectory)/$(projectDockerPath)/Dockerfile -t $(registryServerName)/$(imageName):$(build.buildId) -t $(registryServerName)/$(imageName):latest $(system.defaultWorkingDirectory)/$(projectDockerPath)'
+  displayName: 'Docker Build bash'
+
+- bash: docker login $(registryServerName) -u $(registryLogin) -p $(registryPassword)
+  displayName: 'docker login'
+  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+
+- bash: |
+    docker push $(registryServerName)/$(imageName):$(build.buildId)
+    docker push $(registryServerName)/$(imageName):latest
+  displayName: 'docker push'
+  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+
+- task: HelmInstaller@0
+  displayName: 'Install Helm'
+  inputs:
+    helmVersion: 2.13.0
+
+- bash: helm package --version $(build.buildId) --destination $(build.artifactStagingDirectory) $(system.defaultWorkingDirectory)/$(projectName)/charts/$(projectName)
+  displayName: 'helm package'
+
+- bash: az acr helm push -n $(registryName) -u $(registryLogin) -p $(registryPassword) $(build.artifactStagingDirectory)/$(projectName)-$(build.buildId).tgz
+  displayName: 'az acr helm push'
+  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+
+
