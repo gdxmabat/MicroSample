@@ -9,6 +9,17 @@ variables:
   # define 4 more variables: projectName, registryName, registryLogin and registryPassword in the build pipeline in UI
 
 steps:
+
+- bash: 'ls -la /home/vsts/work/1/s'
+  displayName: 'LS PATH 1'
+
+- bash: 'ls -la $(system.defaultWorkingDirectory)'
+  displayName: 'LS PATH 2'
+
+- bash: 'ls -la $(system.defaultWorkingDirectory)/$(projectDockerPath)/Configuration/'
+  displayName: 'LS PATH'
+
+
 - task: DotNetCoreCLI@2
   displayName: Restore
   inputs:
@@ -70,11 +81,11 @@ steps:
   inputs:
     helmVersion: 2.13.0
 
-- bash: helm package --version $(build.buildId) --destination $(build.artifactStagingDirectory) $(system.defaultWorkingDirectory)/$(projectName)/charts/$(projectName)
+
+- bash: helm package --version $(build.buildId) --destination $(build.artifactStagingDirectory) $(system.defaultWorkingDirectory)/$(projectDockerPath)/Configuration/helm
   displayName: 'helm package'
 
 - bash: az acr helm push -n $(registryName) -u $(registryLogin) -p $(registryPassword) $(build.artifactStagingDirectory)/$(projectName)-$(build.buildId).tgz
   displayName: 'az acr helm push'
   condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
-
 
