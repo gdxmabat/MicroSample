@@ -1,0 +1,4 @@
+apiVersion: v1
+description: Ejemplo de microservicio KOA desplegado en K8S con helm
+name: koaskeleton
+version: v0.1.0
